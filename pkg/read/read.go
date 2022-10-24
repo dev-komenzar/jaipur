@@ -2,36 +2,27 @@ package read
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 )
 
-func whereAmI(comment string) {
-	p, _ := os.Getwd()
-	fmt.Println(comment, p)
+func check(e error) {
+	if e != nil {
+		fmt.Println(os.Getwd())
+		log.Fatal(e)
+	}
 }
 
-func Read(dir string) []string {
-	fmt.Println("read.go: 15: ", dir)
-
-	whereAmI("read.go: 16: where am i: ")
-	err := os.Chdir(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-	whereAmI("read.go: 17: where am i: ")
-
+func Read(dir string) []fs.DirEntry {
 	files, err := os.ReadDir(dir)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var filteredFiles []string
+	check(err)
+	var filteredFiles []fs.DirEntry
 	for _, f := range files {
 		ext := filepath.Ext(f.Name())
 		if ext == ".zip" || ext == ".rar" {
-			filteredFiles = append(filteredFiles, f.Name())
-			fmt.Println(filteredFiles)
+			filteredFiles = append(filteredFiles, f)
 		}
 	}
 
