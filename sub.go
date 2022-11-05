@@ -30,6 +30,19 @@ func whereAmI(comment string) {
 	fmt.Println(comment, p)
 }
 
+func isFile(path string) bool {
+	if f, _ := os.Stat(path); f.IsDir() {
+		return false
+	} else {
+		return true
+	}
+}
+
+// https://qiita.com/KemoKemo/items/d135ddc93e6f87008521
+func getFileNameWithoutExt(path string) string {
+	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
+}
+
 func removeWords(name string, removes []string) string {
 	for _, r := range removes {
 		name = strings.Replace(name, r, "", 1)
@@ -37,8 +50,17 @@ func removeWords(name string, removes []string) string {
 	return name
 }
 
+// name arg should be file name like xxxx.zip
+func rename(name string, removes []string) string {
+	ext := filepath.Ext(name)
+	name = getFileNameWithoutExt(name)
+	name = removeWords(name, removes)
+	name = strings.TrimSpace(name)
+	return strings.Join([]string{name, ext}, "")
+}
+
+// True means name has (ERROR) prefix
 func haveSomePrefix(name string) bool {
-	// True means name has (ERROR) prefix
 	reg := regexp.MustCompile(`^\(ERROR\)|^\(BIG\)`)
 	return reg.MatchString(name)
 }

@@ -19,9 +19,10 @@ func check(e error) {
 	}
 }
 
+// dir arg should be unarchived directory such as '125342143'
+// return slice of ONLY file name such as 'xxxxx.jpg'
 func getImages(dir string) []string {
-	// dir arg should be unarchived directory such as '125342143'
-	// return slice of ONLY file name such as 'xxxxx.jpg'
+
 	files, err := os.ReadDir(dir)
 	check(err)
 
@@ -30,39 +31,52 @@ func getImages(dir string) []string {
 		path := filepath.Join(dir, f.Name())
 		data, err := os.Open(path)
 		check(err)
+		defer data.Close()
+
 		if _, _, err := image.DecodeConfig(data); err == nil {
 			imageNames = append(imageNames, f.Name())
 		}
-		data.Close()
 	}
 
 	return imageNames
 }
 
-func Convert(oldname string, newname string, q uint) (string, error) {
-	// name arg should be archive file name
-	// q arg should be given via cli
-	// ./ - XXX.zip
-	//    - [unarchive dir]/
-	//    - [tmp dir]/
-	fmt.Println("convert.Convert")
+// Names arg should be archive file name
+// q arg should be given via cli
+// ./ - XXX.zip
+//   - [unarchive dir]/
+//   - [tmp dir]/
+//
+// return new file name with "box/", unarchived dir name,
+// tmp dir name and error
+func Convert(oldname string, newname string, q uint) (string, string, string, error) {
+
+	fmt.Println("Converting ", newname)
 
 	// Unarchive
 	unarchived, err := os.MkdirTemp(".", "")
-	check(err)
-	defer os.RemoveAll(unarchived)
+	if err != nil {
+		return "", "", "", err
+	}
+	// defer os.RemoveAll(unarchived)
+
 	err = archiver.Unarchive(oldname, unarchived)
-	check(err)
+	if err != nil {
+		return "", "", "", err
+	}
+
 	images := getImages(unarchived)
 
 	if !(len(images) > 10) {
-		return "", fmt.Errorf("no images to convert. check file: %v", oldname)
+		return "", "", "", fmt.Errorf("no images to convert. check file: %v", oldname)
 	}
 
 	// Convert images in unarchive dir
 	tmp, err := os.MkdirTemp(".", "tmp")
-	check(err)
-	defer os.RemoveAll(tmp)
+	if err != nil {
+		return "", "", "", err
+	}
+	// defer os.RemoveAll(tmp)
 
 	eg, _ := errgroup.WithContext(context.Background())
 	eg.SetLimit(5)
@@ -77,12 +91,17 @@ func Convert(oldname string, newname string, q uint) (string, error) {
 	}
 
 	if err := eg.Wait(); err != nil {
-		return "", err
+		return "", "", "", err
 	}
 
 	// Archive
-	err = archiver.Archive([]string{tmp}, "box/"+newname)
+	var targets []string
+	for _, i := range getImages(tmp) {
+		targets = append(targets, filepath.Join(tmp, i))
+	}
+
+	err = archiver.Archive(targets, "box/"+newname)
 	check(err)
 
-	return "box/" + newname, nil
+	return "box/" + newname, unarchived, tmp, nil
 }

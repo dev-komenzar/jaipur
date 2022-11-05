@@ -1,30 +1,29 @@
 package read
 
 import (
-	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 )
 
-func check(e error) {
-	if e != nil {
-		fmt.Println(os.Getwd())
-		log.Fatal(e)
+func Read(dir string) ([]fs.FileInfo, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
 	}
-}
-
-func Read(dir string) []fs.DirEntry {
-	files, err := os.ReadDir(dir)
-	check(err)
-	var filteredFiles []fs.DirEntry
-	for _, f := range files {
+	var filteredFiles []fs.FileInfo
+	for _, f := range entries {
 		ext := filepath.Ext(f.Name())
 		if ext == ".zip" || ext == ".rar" {
-			filteredFiles = append(filteredFiles, f)
+
+			info, err := f.Info()
+			if err != nil {
+				return nil, err
+			}
+
+			filteredFiles = append(filteredFiles, info)
 		}
 	}
 
-	return filteredFiles
+	return filteredFiles, nil
 }
