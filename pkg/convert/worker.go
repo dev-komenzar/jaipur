@@ -1,4 +1,4 @@
-package convert
+package converter
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 // name arg should be image file name
 // input arg should be dir name
 // output arg should be dir name
-func worker(name string, input string, output string, q uint) error {
+func runMozjpeg(name string, input string, output string, q uint) error {
 
 	inputPath := filepath.Join(input, name)
 	outputPath := filepath.Join(output, name)

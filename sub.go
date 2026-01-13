@@ -19,10 +19,9 @@ func check(e error) error {
 }
 
 func changeDir(dir string) {
-	whereAmI("read.go: 16: where am i: ")
 	err := os.Chdir(dir)
 	check(err)
-	whereAmI("read.go: 17: where am i: ")
+	whereAmI("sub.go: 25: Working dir: ")
 }
 
 func whereAmI(comment string) {

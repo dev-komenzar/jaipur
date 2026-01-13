@@ -10,7 +10,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"jaipur/pkg/convert"
+	converter "jaipur/pkg/convert"
 	"jaipur/pkg/read"
 )
 
@@ -19,9 +19,9 @@ func main() {
 		Flags: flags,
 		Commands: []*cli.Command{
 			{
-				Name:   "modify",
-				Usage:  "modify files. If arg is a directory, modify all files under the directory ",
-				Action: modify,
+				Name:   "convert",
+				Usage:  "convert files. If arg is a directory, modify all files under the directory ",
+				Action: convert,
 				Flags:  flags,
 			},
 		},
@@ -45,7 +45,7 @@ var flags []cli.Flag = []cli.Flag{
 	},
 }
 
-func modify(cCtx *cli.Context) error {
+func convert(cCtx *cli.Context) error {
 
 	fmt.Printf("Hello %q\n", cCtx.Args().Get(0))
 	remove := cCtx.StringSlice("remove")
@@ -53,12 +53,18 @@ func modify(cCtx *cli.Context) error {
 
 	// Path isExist
 	path := cCtx.Args().Get(0)
-	if _, err := os.Stat(path); err != nil {
-		return err
-	}
+	fmt.Println(path)
+	info, err := os.Stat(path)
+	check(err)
 
 	// Change directory
-	dir := filepath.Dir(path)
+	var dir string
+	if info.IsDir() {
+		dir = path
+	} else {
+		dir = filepath.Dir(path)
+	}
+	fmt.Println(dir)
 	changeDir(dir)
 
 	// Argment should be dir or file.
@@ -66,7 +72,7 @@ func modify(cCtx *cli.Context) error {
 
 	if f, _ := os.Stat(path); f.IsDir() {
 		var err error
-		files, err = read.Read(path)
+		files, err = read.ReadDir(path)
 		if err != nil {
 			return err
 		}
@@ -104,12 +110,16 @@ func modify(cCtx *cli.Context) error {
 			continue
 		}
 
-		converted, unarchived, tmp, errconvert := convert.Convert(
+		// Current dir is:
+		//  - XXX.zip
+		//   - [unarchive dir]/
+		//   - [tmp dir]/
+		converted, unarchived, tmp, errconvert := converter.Convert(
 			f.Name(),
 			newname,
 			cCtx.Uint("quality"),
 		)
-		fmt.Println(errconvert != nil && isFile(path), unarchived, tmp)
+		fmt.Printf("Original images: %v, Converted: %v", unarchived, tmp)
 		// Delete temporary directories only if arg is directory
 		defer func() {
 			if !(errconvert != nil && isFile(path)) {

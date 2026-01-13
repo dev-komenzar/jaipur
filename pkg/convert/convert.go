@@ -1,4 +1,4 @@
-package convert
+package converter
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/mholt/archiver/v3"
 	"golang.org/x/sync/errgroup"
+
+	_ "image/png"
 )
 
 func check(e error) {
@@ -20,14 +22,15 @@ func check(e error) {
 }
 
 // dir arg should be unarchived directory such as '125342143'
+//
 // return slice of ONLY file name such as 'xxxxx.jpg'
-func getImages(dir string) []string {
+func getImagesFromDir(dir string) []string {
 
-	files, err := os.ReadDir(dir)
+	entries, err := os.ReadDir(dir)
 	check(err)
 
 	var imageNames []string
-	for _, f := range files {
+	for _, f := range entries {
 		path := filepath.Join(dir, f.Name())
 		data, err := os.Open(path)
 		check(err)
@@ -41,11 +44,8 @@ func getImages(dir string) []string {
 	return imageNames
 }
 
-// Names arg should be archive file name
+// Names arg should be archived file name WITHOUT path
 // q arg should be given via cli
-// ./ - XXX.zip
-//   - [unarchive dir]/
-//   - [tmp dir]/
 //
 // return new file name with "box/", unarchived dir name,
 // tmp dir name and error
@@ -54,25 +54,26 @@ func Convert(oldname string, newname string, q uint) (string, string, string, er
 	fmt.Println("Converting ", newname)
 
 	// Unarchive
-	unarchived, err := os.MkdirTemp(".", "")
+	unarchivedDir, err := os.MkdirTemp(".", "")
 	if err != nil {
 		return "", "", "", err
 	}
 	// defer os.RemoveAll(unarchived)
 
-	err = archiver.Unarchive(oldname, unarchived)
+	err = archiver.Unarchive(oldname, unarchivedDir)
 	if err != nil {
 		return "", "", "", err
 	}
 
-	images := getImages(unarchived)
+	images := getImagesFromDir(unarchivedDir)
 
 	if !(len(images) > 10) {
+		fmt.Println(images)
 		return "", "", "", fmt.Errorf("no images to convert. check file: %v", oldname)
 	}
 
 	// Convert images in unarchive dir
-	tmp, err := os.MkdirTemp(".", "tmp")
+	tmpDir, err := os.MkdirTemp(".", "tmp")
 	if err != nil {
 		return "", "", "", err
 	}
@@ -82,10 +83,10 @@ func Convert(oldname string, newname string, q uint) (string, string, string, er
 	eg.SetLimit(5)
 
 	for _, i := range images {
-		name, unarchived, tmp, q := i, unarchived, tmp, q
+		name, unarchivedDir, tmpDir, q := i, unarchivedDir, tmpDir, q
 		eg.Go(func() error {
 
-			return worker(name, unarchived, tmp, q)
+			return runMozjpeg(name, unarchivedDir, tmpDir, q)
 
 		})
 	}
@@ -96,12 +97,14 @@ func Convert(oldname string, newname string, q uint) (string, string, string, er
 
 	// Archive
 	var targets []string
-	for _, i := range getImages(tmp) {
-		targets = append(targets, filepath.Join(tmp, i))
+	for _, i := range getImagesFromDir(tmpDir) {
+		targets = append(targets, filepath.Join(tmpDir, i))
 	}
 
 	err = archiver.Archive(targets, "box/"+newname)
-	check(err)
+	if err != nil {
+		return "", "", "", err
+	}
 
-	return "box/" + newname, unarchived, tmp, nil
+	return "box/" + newname, unarchivedDir, tmpDir, nil
 }

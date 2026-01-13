@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 )
 
-func Read(dir string) ([]fs.FileInfo, error) {
+func ReadDir(dir string) ([]fs.FileInfo, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
