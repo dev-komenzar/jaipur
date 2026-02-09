@@ -9,9 +9,26 @@
 - ファイル名から不要な文字列を削除
 - 圧縮品質の指定
 
+## 対応フォーマット
+
+### 入力フォーマット
+| フォーマット | 拡張子 |
+|-------------|--------|
+| JPEG | `.jpg`, `.jpeg` |
+| PNG | `.png` |
+| GIF | `.gif` |
+| AVIF | `.avif` |
+
+### 出力フォーマット
+| フォーマット | 説明 |
+|-------------|------|
+| JPEG | mozjpegによる高品質圧縮（プログレッシブJPEG） |
+
+すべての入力画像は `.jpg` 形式に変換されます。
+
 ## 必要条件
 
-- Go 1.19以上
+- Go 1.23以上
 - mozjpeg（システムにインストール済みであること）
 
 ## インストール
@@ -37,12 +54,31 @@ jaipur convert -q 80 [ファイル名.zip]
 jaipur convert --remove "不要な文字列" [ファイル名.zip]
 ```
 
+### ディレクトリモード
+
+画像が入ったディレクトリを直接処理することもできます。
+
+```bash
+# 画像ディレクトリをZIPに圧縮
+jaipur convert --directory ./images
+
+# 画像ディレクトリを別ディレクトリに出力（アーカイブ化しない）
+jaipur convert --directory ./images --output dir
+
+# 品質指定も併用可能
+jaipur convert --directory ./images -q 80 --output zip
+```
+
+**注意**: `--directory`オプション使用時にZIP/RARファイルを引数に指定するとエラーになります。
+
 ## オプション
 
 | オプション | 短縮形 | 説明 | デフォルト |
 |-----------|--------|------|-----------|
 | `--quality` | `-q` | mozjpegの圧縮品質（1-100） | 70 |
 | `--remove` | - | ファイル名から削除する文字列 | - |
+| `--directory` | `-d` | 画像ディレクトリのパスを指定 | - |
+| `--output` | `-o` | 出力形式 (`zip` or `dir`) | `zip` |
 
 ## 出力
 
@@ -56,6 +92,7 @@ jaipur convert --remove "不要な文字列" [ファイル名.zip]
 - [urfave/cli](https://github.com/urfave/cli) - CLIフレームワーク
 - [mholt/archiver](https://github.com/mholt/archiver) - アーカイブ処理
 - [nickalie/go-mozjpegbin](https://github.com/nickalie/go-mozjpegbin) - mozjpegバインディング
+- [gen2brain/avif](https://github.com/gen2brain/avif) - AVIFデコーダー
 - [golang.org/x/sync/errgroup](https://pkg.go.dev/golang.org/x/sync/errgroup) - 並列処理
 
 ## ライセンス

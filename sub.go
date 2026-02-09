@@ -76,3 +76,9 @@ func addPrefix(name string, prefix string) (string, error) {
 	err := os.Rename(name, newName)
 	return newName, err
 }
+
+// unescapeShellPath removes backslash escapes from shell-style paths
+// e.g., "path\ with\ spaces" -> "path with spaces"
+func unescapeShellPath(path string) string {
+	return strings.ReplaceAll(path, `\ `, ` `)
+}

@@ -43,16 +43,41 @@ var flags []cli.Flag = []cli.Flag{
 		Value:   70,
 		Usage:   "Set quality for mozjpeg",
 	},
+	&cli.StringFlag{
+		Name:    "directory",
+		Aliases: []string{"d"},
+		Usage:   "Path to image directory to process directly",
+	},
+	&cli.StringFlag{
+		Name:    "output",
+		Aliases: []string{"o"},
+		Value:   "zip",
+		Usage:   "Output format: 'zip' or 'dir'",
+	},
 }
 
 func convert(cCtx *cli.Context) error {
-
-	fmt.Printf("Hello %q\n", cCtx.Args().Get(0))
 	remove := cCtx.StringSlice("remove")
+	directoryFlag := cCtx.String("directory")
+	outputType := cCtx.String("output")
+
+	// Validate output type
+	if outputType != "zip" && outputType != "dir" {
+		return fmt.Errorf("invalid output type: %s. Use 'zip' or 'dir'", outputType)
+	}
+
+	// Directory mode: process image directory directly
+	if directoryFlag != "" {
+		return convertDirectory(cCtx, directoryFlag, outputType)
+	}
+
+	// Archive mode (original behavior)
+	fmt.Printf("Hello %q\n", cCtx.Args().Get(0))
 	fmt.Println("Remove word: ", remove)
 
 	// Path isExist
-	path := cCtx.Args().Get(0)
+	// Unescape shell-style backslash sequences (e.g., "\ " -> " ")
+	path := unescapeShellPath(cCtx.Args().Get(0))
 	fmt.Println(path)
 	info, err := os.Stat(path)
 	check(err)
@@ -165,5 +190,69 @@ func convert(cCtx *cli.Context) error {
 		}
 	}
 
+	return nil
+}
+
+// convertDirectory handles the --directory flag mode
+func convertDirectory(cCtx *cli.Context, dirPath string, outputType string) error {
+	// Validate: check if any args are archive files
+	for i := 0; i < cCtx.Args().Len(); i++ {
+		arg := cCtx.Args().Get(i)
+		ext := strings.ToLower(filepath.Ext(arg))
+		if ext == ".zip" || ext == ".rar" {
+			return fmt.Errorf("--directory flag cannot be used with archive files. Remove --directory or provide a directory path")
+		}
+	}
+
+	// Validate directory exists
+	info, err := os.Stat(dirPath)
+	if err != nil {
+		return fmt.Errorf("directory not found: %s", dirPath)
+	}
+	if !info.IsDir() {
+		return fmt.Errorf("path is not a directory: %s", dirPath)
+	}
+
+	// Get absolute path for proper handling
+	absPath, err := filepath.Abs(dirPath)
+	if err != nil {
+		return err
+	}
+
+	// Use directory name as output name
+	outputName := filepath.Base(absPath)
+	if remove := cCtx.StringSlice("remove"); len(remove) > 0 {
+		outputName = removeWords(outputName, remove)
+		outputName = strings.TrimSpace(outputName)
+	}
+
+	// Ensure box directory exists
+	if f, err := os.Stat("box"); os.IsNotExist(err) || !f.IsDir() {
+		err = os.Mkdir("box", 0777)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Convert the directory
+	converted, tmpDir, err := converter.ConvertDirectory(
+		absPath,
+		outputName,
+		cCtx.Uint("quality"),
+		outputType,
+	)
+
+	// Clean up temp directory
+	defer func() {
+		if tmpDir != "" {
+			os.RemoveAll(tmpDir)
+		}
+	}()
+
+	if err != nil {
+		return fmt.Errorf("conversion failed: %v", err)
+	}
+
+	fmt.Printf("Conversion complete: %s\n", converted)
 	return nil
 }

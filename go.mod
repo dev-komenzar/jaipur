@@ -1,14 +1,17 @@
 module jaipur
 
-go 1.19
+go 1.23
 
 require github.com/urfave/cli/v2 v2.20.3
 
 require (
+	github.com/ebitengine/purego v0.8.3 // indirect
+	github.com/gen2brain/avif v0.4.4 // indirect
 	github.com/mholt/archiver v3.1.1+incompatible // indirect
 	github.com/nickalie/go-binwrapper v0.0.0-20190114141239-525121d43c84 // indirect
 	github.com/nickalie/go-mozjpegbin v0.0.0-20170427050522-d8a58e243a3d // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
+	github.com/tetratelabs/wazero v1.9.0 // indirect
 )
 
 require (
