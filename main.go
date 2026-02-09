@@ -58,7 +58,7 @@ var flags []cli.Flag = []cli.Flag{
 
 func convert(cCtx *cli.Context) error {
 	remove := cCtx.StringSlice("remove")
-	directoryFlag := cCtx.String("directory")
+	directoryFlag := unescapeShellPath(cCtx.String("directory"))
 	outputType := cCtx.String("output")
 
 	// Validate output type
