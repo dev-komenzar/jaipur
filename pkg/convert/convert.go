@@ -108,18 +108,24 @@ func Convert(oldname string, newname string, q uint) (string, string, string, er
 	eg, _ := errgroup.WithContext(context.Background())
 	eg.SetLimit(5)
 
+	progress := NewProgressCounter(len(images))
+
 	for _, i := range images {
 		name, unarchivedDir, tmpDir, q := i, unarchivedDir, tmpDir, q
 		eg.Go(func() error {
-
-			return runMozjpeg(name, unarchivedDir, tmpDir, q)
-
+			err := runMozjpeg(name, unarchivedDir, tmpDir, q)
+			if err == nil {
+				progress.Increment()
+			}
+			return err
 		})
 	}
 
 	if err := eg.Wait(); err != nil {
+		progress.Done()
 		return "", "", "", err
 	}
+	progress.Done()
 
 	// Archive
 	var targets []string
@@ -160,16 +166,24 @@ func ConvertDirectory(dirPath string, outputName string, q uint, outputType stri
 	eg, _ := errgroup.WithContext(context.Background())
 	eg.SetLimit(5)
 
+	progress := NewProgressCounter(len(images))
+
 	for _, i := range images {
 		name, inputDir, tmpDir, q := i, dirPath, tmpDir, q
 		eg.Go(func() error {
-			return runMozjpeg(name, inputDir, tmpDir, q)
+			err := runMozjpeg(name, inputDir, tmpDir, q)
+			if err == nil {
+				progress.Increment()
+			}
+			return err
 		})
 	}
 
 	if err := eg.Wait(); err != nil {
+		progress.Done()
 		return "", "", err
 	}
+	progress.Done()
 
 	var outputPath string
 
