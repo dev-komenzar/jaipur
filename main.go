@@ -35,7 +35,7 @@ func main() {
 var flags []cli.Flag = []cli.Flag{
 	&cli.StringSliceFlag{
 		Name:  "remove",
-		Usage: "A word you want to remove. ex '--remove a,b,c' ",
+		Usage: "A word you want to remove. ex: --remove 'a,b,c'",
 	},
 	&cli.UintFlag{
 		Name:    "quality",
