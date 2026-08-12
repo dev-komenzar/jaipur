@@ -10,12 +10,13 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        lib = nixpkgs.legacyPackages.${system}.lib;
         
         # Go toolchain (latest stable, compatible with go 1.23+)
         go = pkgs.go;
         
-        # mozjpeg is not in nixpkgs; use libjpeg_turbo (compatible)
-        mozjpeg = pkgs.libjpeg_turbo;
+        # mozjpeg is available in nixpkgs
+        mozjpeg = pkgs.mozjpeg;
         
         # Development tools
         devTools = with pkgs; [
@@ -90,14 +91,16 @@
           version = "0.1.0";
           src = ./.;
           
-          vendorHash = null; # or specify hash
+          vendorHash = "sha256-fgcugDy2vbDz5nqjjB/my8c+Oa4/Rs+gsgHASuiuOIQ=";
           
           buildInputs = [ mozjpeg pkgs.libpng pkgs.zlib ];
           
           # CGO flags for libjpeg_turbo
-          CGO_ENABLED = "1";
-          CGO_CFLAGS = "-I${mozjpeg}/include";
-          CGO_LDFLAGS = "-L${mozjpeg}/lib -ljpeg";
+          env = {
+            CGO_ENABLED = "1";
+            CGO_CFLAGS = "-I${mozjpeg}/include";
+            CGO_LDFLAGS = "-L${mozjpeg}/lib -ljpeg";
+          };
         };
       }
     );
