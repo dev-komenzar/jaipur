@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gen2brain/avif"
 	"github.com/mholt/archiver/v3"
@@ -106,7 +107,7 @@ func Convert(oldname string, newname string, q uint) (string, string, string, er
 	// defer os.RemoveAll(tmp)
 
 	eg, _ := errgroup.WithContext(context.Background())
-	eg.SetLimit(5)
+	eg.SetLimit(max(1, runtime.NumCPU()/2))
 
 	progress := NewProgressCounter(len(images))
 
@@ -162,9 +163,9 @@ func ConvertDirectory(dirPath string, outputName string, q uint, outputType stri
 		return "", "", err
 	}
 
-	// Convert images in parallel (max 5)
+	// Convert images in parallel
 	eg, _ := errgroup.WithContext(context.Background())
-	eg.SetLimit(5)
+	eg.SetLimit(max(1, runtime.NumCPU()/2))
 
 	progress := NewProgressCounter(len(images))
 
