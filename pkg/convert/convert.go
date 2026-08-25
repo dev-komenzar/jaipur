@@ -106,8 +106,10 @@ func Convert(oldname string, newname string, q uint) (string, string, string, er
 	}
 	// defer os.RemoveAll(tmp)
 
+	parallelism := max(1, runtime.NumCPU()/2)
+	log.Printf("Converting %d images with %d parallel workers\n", len(images), parallelism)
 	eg, _ := errgroup.WithContext(context.Background())
-	eg.SetLimit(max(1, runtime.NumCPU()/2))
+	eg.SetLimit(parallelism)
 
 	progress := NewProgressCounter(len(images))
 
@@ -164,8 +166,10 @@ func ConvertDirectory(dirPath string, outputName string, q uint, outputType stri
 	}
 
 	// Convert images in parallel
+	parallelism := max(1, runtime.NumCPU()/2)
+	log.Printf("Converting %d images with %d parallel workers\n", len(images), parallelism)
 	eg, _ := errgroup.WithContext(context.Background())
-	eg.SetLimit(max(1, runtime.NumCPU()/2))
+	eg.SetLimit(parallelism)
 
 	progress := NewProgressCounter(len(images))
 
