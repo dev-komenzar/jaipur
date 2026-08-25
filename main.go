@@ -92,23 +92,19 @@ func convert(cCtx *cli.Context) error {
 	fmt.Println(dir)
 	changeDir(dir)
 
-	// Argment should be dir or file.
+	// After changeDir, we are inside the target directory.
+	// Use "." to refer to current directory instead of the original (potentially relative) path.
 	var files []os.FileInfo
 
-	if f, _ := os.Stat(path); f.IsDir() {
+	if info.IsDir() {
 		var err error
-		files, err = read.ReadDir(path)
+		files, err = read.ReadDir(".")
 		if err != nil {
 			return err
 		}
-
 	} else {
-
-		f, err := os.Stat(path)
-		if err != nil {
-			return err
-		}
-		files = append(files, f)
+		// Single file case: use the file name relative to current dir
+		files = append(files, info)
 	}
 
 	// Check if "box" dir exits
