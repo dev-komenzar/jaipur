@@ -60,19 +60,14 @@
           # pkg-config paths for libjpeg_turbo
           PKG_CONFIG_PATH = "${mozjpeg}/lib/pkgconfig:${pkgs.libpng}/lib/pkgconfig:${pkgs.zlib}/lib/pkgconfig";
           
-          # Library paths for runtime
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-            mozjpeg
-            pkgs.libpng
-            pkgs.zlib
-            pkgs.libarchive
-            pkgs.bzip2
-            pkgs.xz
-            pkgs.zstd
-          ];
-          
           # Shell hook for additional setup
           shellHook = ''
+            # mozjpeg/libpng/zlib への RUNPATH をビルド成果物に埋め込む。
+            # LD_LIBRARY_PATH を設定しないことで、この devShell 内で起動する
+            # 他のツール（serena MCP など）のライブラリ解決を汚染しない。
+            # mkShell が buildInputs から自動生成する LD_LIBRARY_PATH を解除する。
+            unset LD_LIBRARY_PATH
+            export NIX_LDFLAGS="-rpath ${mozjpeg}/lib -rpath ${pkgs.libpng}/lib -rpath ${pkgs.zlib}/lib ''${NIX_LDFLAGS:-}"
             echo "🦀 Jaipur development environment"
             echo "Go version: $(go version)"
             echo "libjpeg_turbo: ${mozjpeg}"
