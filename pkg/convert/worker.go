@@ -5,7 +5,6 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/gen2brain/avif"
 	"github.com/nickalie/go-mozjpegbin"
@@ -39,15 +38,12 @@ func convertAVIFtoPNG(inputPath string) (string, error) {
 	return tmpFile.Name(), nil
 }
 
-// name arg should be image file name
-// input arg should be dir name
-// output arg should be dir name
-func runMozjpeg(name string, input string, output string, q uint) error {
-	inputPath := filepath.Join(input, name)
-
-	// 出力ファイル名の拡張子を .jpg に変更
-	outputName := strings.TrimSuffix(name, filepath.Ext(name)) + ".jpg"
-	outputPath := filepath.Join(output, outputName)
+// runMozjpeg converts a single image to JPEG using mozjpeg.
+// inputPath is the full path to the source image.
+// outputDir is the directory to write the converted file into.
+// outputName is the predetermined output file name (including the .jpg extension).
+func runMozjpeg(inputPath string, outputDir string, outputName string, q uint) error {
+	outputPath := filepath.Join(outputDir, outputName)
 
 	// Check if AVIF and convert to PNG first
 	actualInput := inputPath
