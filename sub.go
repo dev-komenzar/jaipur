@@ -29,14 +29,6 @@ func whereAmI(comment string) {
 	fmt.Println(comment, p)
 }
 
-func isFile(path string) bool {
-	if f, _ := os.Stat(path); f.IsDir() {
-		return false
-	} else {
-		return true
-	}
-}
-
 // https://qiita.com/KemoKemo/items/d135ddc93e6f87008521
 func getFileNameWithoutExt(path string) string {
 	return filepath.Base(path[:len(path)-len(filepath.Ext(path))])
@@ -58,9 +50,9 @@ func rename(name string, removes []string) string {
 	return strings.Join([]string{name, ext}, "")
 }
 
-// True means name has (ERROR) prefix
+// True means name has (ERROR)/(BIG)/(SKIP) prefix
 func haveSomePrefix(name string) bool {
-	reg := regexp.MustCompile(`^\(ERROR\)|^\(BIG\)`)
+	reg := regexp.MustCompile(`^\(ERROR\)|^\(BIG\)|^\(SKIP\)`)
 	return reg.MatchString(name)
 }
 
