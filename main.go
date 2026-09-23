@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,9 +19,29 @@ import (
 	"jaipur/pkg/read"
 )
 
+// version is injected at build time with -ldflags "-X main.version=vX.Y.Z"
+// (see flake.nix). resolveVersion falls back to the module version recorded by
+// `go install <module>@vX.Y.Z` when it is not injected.
+var version = "dev"
+
+func resolveVersion() string {
+	if version != "" && version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if v := info.Main.Version; v != "" && v != "(devel)" {
+			return v
+		}
+	}
+	return version
+}
+
 func main() {
 	app := &cli.App{
-		Flags: flags,
+		Name:    "jaipur",
+		Usage:   "Image archive compression tool with mozjpeg",
+		Version: resolveVersion(),
+		Flags:   flags,
 		Commands: []*cli.Command{
 			{
 				Name:   "convert",
