@@ -55,7 +55,24 @@ jaipur convert --remove "不要な文字列" [ファイル名.zip]
 
 # サブディレクトリを持つアーカイブを確認なしでフラット化して処理
 jaipur convert --yes [ディレクトリパス]
+
+# バージョンを表示
+jaipur --version
 ```
+
+### バージョン
+
+`jaipur --version` はビルド時に埋め込まれたバージョン（例: `v0.2.0`）を表示します。
+
+```bash
+# バージョンを埋め込んでビルド
+go build -ldflags "-X main.version=v0.2.0"
+
+# Nixの場合（flake.nixのversionを使用）
+nix build
+```
+
+`go install <module>@vX.Y.Z` のようにモジュールバージョンを指定してインストールした場合は、そのバージョンが自動で表示されます。
 
 ### サブディレクトリのフラット化
 
