@@ -11,7 +11,10 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         lib = nixpkgs.legacyPackages.${system}.lib;
-        
+
+        # Keep in sync with the latest git tag (e.g. v0.2.0).
+        version = "0.2.0";
+
         # Go toolchain (latest stable, compatible with go 1.23+)
         go = pkgs.go;
         
@@ -83,10 +86,10 @@
         # Optional: package definition
         packages.default = pkgs.buildGoModule {
           pname = "jaipur";
-          version = "0.1.0";
+          inherit version;
           src = ./.;
           
-          vendorHash = "sha256-fgcugDy2vbDz5nqjjB/my8c+Oa4/Rs+gsgHASuiuOIQ=";
+          vendorHash = "sha256-a2db194qFcbAgcUl0Kxf/WFc3gf5af9mZ6FF6yYOFZE=";
           
           buildInputs = [ mozjpeg pkgs.libpng pkgs.zlib ];
           
@@ -96,6 +99,9 @@
             CGO_CFLAGS = "-I${mozjpeg}/include";
             CGO_LDFLAGS = "-L${mozjpeg}/lib -ljpeg";
           };
+
+          # Embed the version so `jaipur --version` reports it.
+          ldflags = [ "-X=main.version=v${version}" ];
         };
       }
     );
